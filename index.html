@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <title>Calculator</title>
+    <style>
+      * {box-sizing: border-box;
+         margin: 0;
+         padding: 0;}
+      section.calculator {background-color: gray;
+                          width: fit-content;
+                          border: thin solid black;
+                          padding: .25rem;}
+      .calculator button {width: 2rem;
+                         height: 2rem;}
+      .screen {background-color: white;
+               color: black;
+               margin-bottom: .25rem;
+               height: 1.5rem;
+               padding: .25rem;}
+      div.row:last-of-type {display: flex;
+                            margin-top: .25rem;
+                            column-gap: .25rem;}
+      div.row:last-of-type button {width: 50%;}
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>On Screen Calculator</h1>
+    </header>
+    <main>
+      <section class="calculator">
+        <div class="row screen"></div>
+        <div class="row">
+          <button data-calc="+" class="operator">+</button>
+          <button data-calc="-" class="operator">-</button>
+          <button data-calc="*" class="operator">∗</button>
+          <button data-calc="/" class="operator">/</button>
+        </div>
+        <div class="row">
+          <button data-calc="0" class="numBtn">0</button>
+          <button data-calc="1" class="numBtn">1</button>
+          <button data-calc="." class="numBtn decimal">·</button>
+          <button class="equal">=</button>
+        </div>
+        <div class="row">
+        <button data-calc="2" class="numBtn">2</button>
+          <button data-calc="3" class="numBtn">3</button>
+          <button data-calc="4" class="numBtn">4</button>
+          <button data-calc="5" class="numBtn">5</button>
+        </div>
+        <div class="row">
+          <button data-calc="6" class="numBtn">6</button>
+          <button data-calc="7" class="numBtn">7</button>
+          <button data-calc="8" class="numBtn">8</button>
+          <button data-calc="9" class="numBtn">9</button>
+        </div>
+        <div class="row">
+          <button class="back">Back</button>
+          <button class="clear"><span style='text-decoration: underline;'>C</span>lear</button>
+        </div>
+      </section>
+    </main>
+
+  </body>
+  <script>
+    const numBtns = document.querySelectorAll(".numBtn");
+    const opBtns = document.querySelectorAll(".operator");
+    const clearBtn = document.querySelector(".clear");
+    const equalBtn = document.querySelector(".equal");
+    const decBtn = document.querySelector(".decimal");
+    const backBtn = document.querySelector(".back");
+    const screen = document.querySelector(".screen"); 
+    let nums = new Array();
+    let op = "";
+    let result = 0;
+    let error0 = false;
+
+    window.addEventListener("keydown", function(event) {
+      switch(event.key){
+        case "0":
+        case "1":
+        case "2":
+        case "3":
+        case "4":
+        case "5":
+        case "6":
+        case "7":
+        case "8":
+        case "9":
+        case ".":
+          decBtn.removeAttribute("disabled");
+          if(nums[0] == screen.textContent){
+            display("", true);
+          }
+          if(screen.textContent.includes(".")){
+            decBtn.setAttribute("disabled","");
+            if(event.key == "."){
+              break;
+            }
+          }
+          display(event.key);
+          break;
+        case "+":
+        case "-":
+        case "*":
+        case "/":
+          decBtn.removeAttribute("disabled");
+          if(screen.textContent){
+            if(nums.length < 2){
+              nums.push(screen.textContent);
+            }
+          }
+          else{
+            alert("Please enter a number before entering an operator");
+            return;
+          }
+          display("", true);
+          if(op && nums.length == 2){
+            nums[0] = operate(op,parseFloat(nums[0]),parseFloat(nums[1]));
+            display(nums[0]);
+            nums.pop();
+          }
+          op = event.key;
+          break;
+        case "=":
+          decBtn.removeAttribute("disabled");
+          try{
+            nums.push(screen.textContent);
+            result = operate(op, parseFloat(nums[0]), parseFloat(nums[1]));
+            if(!Number.isInteger(result)){
+              result = result.toFixed(2);
+            }
+            display(result, true);
+          }
+          catch(error){
+            clear();
+            if(!error0){
+              alert("Please enter at least two numbers and an operator before clicking \"=\"");
+            }
+          }
+          break;
+        case "Backspace":
+          backOne();
+          break;
+        case "c":
+        case "C":
+          clear();
+      }
+          });
+ 
+
+    numBtns.forEach(btn => {
+      btn.addEventListener("click", function(event){
+        decBtn.removeAttribute("disabled");
+        if(nums[0] == screen.textContent){
+          display("", true);
+        }
+        display(this.dataset.calc);
+        if(screen.textContent.includes(".")){
+          decBtn.setAttribute("disabled","");
+        }
+      });
+    })
+
+    opBtns.forEach(btn => {
+      btn.addEventListener("click", function(event){
+        decBtn.removeAttribute("disabled");
+        if(screen.textContent){
+          if(nums.length < 2){
+            nums.push(screen.textContent);
+          }
+        }
+        else{
+          alert("Please enter a number before entering an operator");
+          return;
+        }
+        display("", true)
+        if(op){
+          nums[0] = operate(op,nums[0],nums[1]);
+          display(nums[0]);
+          nums.pop();
+        }
+        op = this.dataset.calc;
+      });
+    })
+
+    equalBtn.addEventListener("click", function(event){
+      decBtn.removeAttribute("disabled");
+      try{
+        nums.push(screen.textContent);
+        result = operate(op, parseFloat(nums[0]), parseFloat(nums[1]));
+        if(!Number.isInteger(result)){
+          result = result.toFixed(2);
+        }
+        display(result, true);
+      }
+      catch(error){
+        clear();
+        if(!error0){
+          alert("Please enter at least two numbers and an operator before clicking \"=\"");
+        }
+      }
+    })
+
+    clearBtn.addEventListener("click", clear);
+
+    backBtn.addEventListener("click", backOne);
+
+    function add(num1, num2){
+      return num1 + num2;
+    }
+
+    function subtract(num1, num2){
+      return num1 - num2;
+    }
+
+    function multiply(num1, num2){
+      return num1 * num2;
+    }
+
+    function divide(num1, num2){
+      if(num2 == 0){
+        alert("You cannot divide by \"0\"");
+        error0 = true;
+        return;
+      }
+      return num1 / num2;
+    }
+
+    function operate(operator, num1, num2){
+      let result = null;
+      switch(operator){
+        case "+":
+          result = add(num1, num2);
+          break;
+        case "-":
+          result = subtract(num1, num2);
+          break;
+        case "*":
+          result = multiply(num1, num2);
+          break;
+        case "/":
+          result = divide(num1, num2);
+          break;
+      }
+      return result;
+    }
+
+    function display(num, only=false){
+      if(only){
+        screen.textContent = num;
+      }
+      else{
+        screen.textContent += num;
+      }
+    }
+
+    function clear(){
+      decBtn.removeAttribute("disabled");
+      display("", true);
+      nums = new Array();
+      op = "";
+    }
+
+    function backOne(){
+      let screenChars = screen.textContent.split("");
+      screenChars.pop();
+      display(screenChars.join(""), true);
+    }
+  </script>
+</html>
